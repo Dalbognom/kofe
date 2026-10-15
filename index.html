@@ -90,7 +90,7 @@
 
     /* ===== КАРТИНКИ В МЕНЮ: появляются при наведении ===== */
     .menu-item { position: relative; cursor: default; border-radius: 6px; transition: color .2s; }
-    .menu-item:hover .dish, .menu-item:focus .dish { color: #9CC5A8; }
+    .menu-item.open .dish, .menu-item:focus-visible .dish { color: #9CC5A8; }
     .menu-item:focus-visible { outline: 2px solid #9CC5A8; outline-offset: 4px; }
     .art {
       position: absolute; right: 0; bottom: calc(100% + 6px); z-index: 10;
@@ -101,7 +101,12 @@
       pointer-events: none; transition: opacity .2s, transform .35s cubic-bezier(.2, .9, .3, 1.35);
     }
     .art img { display: block; width: 100%; aspect-ratio: 4 / 5; object-fit: cover; border-radius: 12px; margin: 0 0 8px; }
-    .menu-item:hover .art, .menu-item:focus .art { opacity: 1; transform: none; }
+    .menu-item.open .art, .menu-item:focus-visible .art { opacity: 1; transform: none; }
+    /* Наведение мышкой — только на компьютерах. На телефоне картинку открывает нажатие (см. скрипт внизу) */
+    @media (hover: hover) {
+      .menu-item:hover .dish { color: #9CC5A8; }
+      .menu-item:hover .art { opacity: 1; transform: none; }
+    }
     .steam path { animation: steam 2.2s ease-in-out infinite; opacity: 0; }
     .steam path:nth-child(2) { animation-delay: .5s; }
     .steam path:nth-child(3) { animation-delay: 1s; }
@@ -125,9 +130,13 @@
     .row .field { flex: 1 1 160px; }
     .row { display: flex; flex-wrap: wrap; gap: 16px; }
     label { font-size: 15px; font-weight: 700; }
-    input {
+    input, select {
       font: inherit; font-size: 16px; padding: 14px 16px; min-height: 50px; width: 100%;
       border: 1px solid #BDB8AC; border-radius: 12px; background: #FFFFFF; color: var(--text);
+    }
+    select {
+      appearance: none; -webkit-appearance: none; padding-right: 40px;
+      background: #FFFFFF url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none' stroke='%234A4842' stroke-width='2'%3E%3Cpath d='M1 1l5 5 5-5'/%3E%3C/svg%3E") no-repeat right 16px center;
     }
     form .btn { min-height: 54px; }
     form .btn:disabled { opacity: 0.6; cursor: wait; }
@@ -273,7 +282,7 @@
   <section id="book" class="container booking">
     <div class="booking-text">
       <h2>Забронировать столик</h2>
-      <p>Оставьте контакты — перезвоним и подтвердим бронь. Для компаний от шести человек лучше бронировать заранее.</p>
+      <p>Оставьте контакты — перезвоним и подтвердим бронь. Онлайн можно забронировать столик до 5 гостей, для компании больше — позвоните нам.</p>
     </div>
     <form id="booking-form">
       <div class="field">
@@ -282,17 +291,30 @@
       </div>
       <div class="field">
         <label for="phone">Телефон</label>
-        <input id="phone" name="phone" type="tel" placeholder="+7 (___) ___-__-__" autocomplete="tel" maxlength="30" required>
+        <input id="phone" name="phone" type="tel" inputmode="tel" placeholder="+7 (___) ___-__-__" autocomplete="tel" maxlength="30" required>
       </div>
       <div class="row">
         <div class="field">
-          <label for="when">Дата и время</label>
-          <input id="when" name="when" type="datetime-local" required>
+          <label for="date">Дата</label>
+          <input id="date" name="date" type="date" required>
         </div>
         <div class="field">
-          <label for="guests">Гостей</label>
-          <input id="guests" name="guests" type="number" placeholder="2" min="1" max="30" required>
+          <label for="time">Время</label>
+          <select id="time" name="time" required>
+            <option value="">Сначала выберите дату</option>
+          </select>
         </div>
+      </div>
+      <div class="field">
+        <label for="guests">Гостей</label>
+        <select id="guests" name="guests" required>
+          <option value="">Сколько вас будет?</option>
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+        </select>
       </div>
       <div class="hp" aria-hidden="true">
         <label for="website">Не заполняйте это поле</label>
@@ -319,8 +341,8 @@
       </div>
       <div class="card">
         <span class="label">Часы работы</span>
-        <span>Круглосуточно</span>
-        <span>без выходных</span>
+        <span>Ежедневно</span>
+        <span>с 9:00 до 21:00</span>
       </div>
       <div class="card">
         <span class="label">Связь</span>
@@ -339,11 +361,36 @@
     </div>
   </footer>
 
+  <!-- ===== МЕНЮ НА ТЕЛЕФОНЕ: картинка открывается нажатием, всегда только одна ===== -->
+  <script>
+    const menuItems = document.querySelectorAll('.menu-item');
+    const canHover = window.matchMedia('(hover: hover)').matches;
+
+    if (!canHover) {
+      menuItems.forEach((item) => {
+        item.addEventListener('click', (event) => {
+          event.stopPropagation();
+          const wasOpen = item.classList.contains('open');
+          menuItems.forEach((other) => other.classList.remove('open'));
+          if (!wasOpen) item.classList.add('open');
+        });
+      });
+      // Нажатие в любом другом месте страницы закрывает картинку
+      document.addEventListener('click', () => {
+        menuItems.forEach((item) => item.classList.remove('open'));
+      });
+    }
+  </script>
+
   <!-- ===== ОТПРАВКА ФОРМЫ БРОНИ ===== -->
   <script>
-    // Адрес воркера с ботом. Вставьте сюда свой после публикации воркера на Cloudflare,
-    // например: 'https://kofe-booking.ваш-логин.workers.dev/booking'
+    // Адрес воркера с ботом (Cloudflare)
     const BOOKING_URL = 'https://kofe-booking.msa10032007.workers.dev/booking';
+
+    // Часы работы: бронь с 9:00, последняя — за 30 минут до закрытия (20:30).
+    // Если меняете здесь — поменяйте так же в bot/worker.js.
+    const OPEN_HOUR = 9;
+    const CLOSE_HOUR = 21;
 
     const form = document.getElementById('booking-form');
     const statusText = document.getElementById('form-status');
@@ -354,18 +401,69 @@
       statusText.className = 'form-status ' + type;
     }
 
+    // Текущие дата и время по Москве (кофейня в Петербурге), в каком бы поясе ни был гость
+    function moscowNow() {
+      const now = new Date(Date.now() + 3 * 60 * 60 * 1000);
+      return { date: now.toISOString().slice(0, 10), minutes: now.getUTCHours() * 60 + now.getUTCMinutes() };
+    }
+
+    // Российский номер: +7, 7 или 8 и ещё 10 цифр. Возвращает красивый вид или null
+    function normalizePhone(value) {
+      let digits = value.replace(/\D/g, '');
+      if (digits.length === 11 && (digits[0] === '7' || digits[0] === '8')) digits = digits.slice(1);
+      if (digits.length !== 10 || !/^[3489]/.test(digits)) return null;
+      return `+7 (${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6, 8)}-${digits.slice(8)}`;
+    }
+
+    // Список времени с шагом 30 минут; на сегодня — только то, что ещё не прошло
+    function updateTimes() {
+      const select = form.time;
+      const previous = select.value;
+      const now = moscowNow();
+      select.innerHTML = '';
+
+      if (!form.date.value) {
+        select.add(new Option('Сначала выберите дату', ''));
+        return;
+      }
+
+      for (let minutes = OPEN_HOUR * 60; minutes < CLOSE_HOUR * 60; minutes += 30) {
+        if (form.date.value === now.date && minutes <= now.minutes) continue;
+        const label = String(Math.floor(minutes / 60)).padStart(2, '0') + ':' + String(minutes % 60).padStart(2, '0');
+        select.add(new Option(label, label));
+      }
+
+      if (select.options.length === 0) {
+        select.add(new Option('На сегодня мест нет — выберите другой день', ''));
+      } else {
+        select.insertBefore(new Option('Выберите время', ''), select.firstChild);
+        select.value = [...select.options].some((o) => o.value === previous) ? previous : '';
+      }
+    }
+
+    form.date.min = moscowNow().date;
+    form.date.addEventListener('change', updateTimes);
+    updateTimes();
+
+    form.phone.addEventListener('input', () => form.phone.setCustomValidity(''));
+    form.phone.addEventListener('blur', () => {
+      const pretty = normalizePhone(form.phone.value);
+      if (pretty) form.phone.value = pretty;
+    });
+
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
 
-      if (!BOOKING_URL) {
-        showStatus('Бронирование пока не подключено.', 'error');
+      if (!normalizePhone(form.phone.value)) {
+        form.phone.setCustomValidity('Введите российский номер: +7 или 8 и ещё 10 цифр');
+        form.phone.reportValidity();
         return;
       }
 
       const data = {
         name: form.name.value,
         phone: form.phone.value,
-        when: form.when.value,
+        when: form.date.value + 'T' + form.time.value,
         guests: Number(form.guests.value),
         consent: form.consent.checked,
         website: form.website.value,
@@ -384,6 +482,7 @@
         const result = await response.json();
         if (result.ok) {
           form.reset();
+          updateTimes();
           showStatus('Спасибо! Заявка отправлена — скоро перезвоним.', 'ok');
         } else {
           showStatus(result.error || 'Не получилось отправить заявку.', 'error');
